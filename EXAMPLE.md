@@ -2,6 +2,7 @@
 # 1.1 安装mysql 
 
   目前只支持mysql数据库，测试之前先安装好数据库
+  
 
 # 1.2 docker 安装最新版 go-workflow 微服务
 
@@ -16,6 +17,8 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
  3. $ go build
 
  4. $ go-workflow.exe
+
+ 流程启动后，打开mysql，可以看到数据库中已经建立的相应的表结构，表结构详见：README.md 中的数据库设计
 
 # 1.4 部署到 K8s
 
@@ -35,10 +38,14 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
 
   如果返回：{"data":"1","ok":true} ，1表示流程实例的id,true表示成功了
 
+  
+
 
   ---------------------------------------------------------------
   或 通过 POST 访问： http://localhost:8080/api/v1/workflow/procdef/saveByToken (后台通过 token 从redis查询用户信息 userinfo，token可以保存在 Authorization 里
   面 或者 reques参数里)
+
+  设置redis里的用户信息可以参考：3.启动流程中，通过redis-cli设置用户信息
 
 // UserInfo 用户信息
 
@@ -93,13 +100,36 @@ docker run  -e DbType=mysql -e DbLogMode=false -e DbName=test -e DbHost=localhos
 
   返回结果：{"data":"1","ok":true}
 
+  如果连接了redis，需要使用：http://localhost:8080/api/v1/workflow/process/startByToken
+  redis key：11025
+redis val : {
+"ID": "11025",
+"username": "11025-张三",
+"company": "A公司",
+"department": "A公司-A部门",
+"roles": [],
+"departments": []
+}
+
+header key：Authorization
+header val : 11025
+
+这样就能取到redis的值了。只要连接了redis，接口就必须带token，即header里含有Authorization值。Authorization的值就是redis key名。这样就对应起来了。
+来自于https://github.com/go-workflow/go-workflow/issues/23
+
+使用redis-cli 设置key值：
+redis-cli 
+
+SET 11025 "{\"ID\":\"11025\",\"username\":\"11025-张三\",\"company\":\"A公司\",\"department\":\"A公司-A部门\",\"roles\":[],\"departments\":[]}"
+
+
 # 4.审批
 
 # 4.1 审批
   通过POST访问：http://localhost:8080/workflow/task/complete
 
   POST参数：{"taskID":2,"pass":"true","userID":"11029","company":"A公司","comment": "评论备注","candidate": "王五"}
-
+SET 11029 "{\"ID\":\"11029\",\"username\":\"11029-李四\",\"company\":\"A公司\",\"department\":\"A公司-A部门\",\"roles\":[],\"departments\":[]}"
   参数详解： taskID代表当前任务id，true表示通过，false表示驳回,candidate指定下一步执行人或者审批组如：candidate: "人事组"（一般不指定）
 
   （注意：整个流程框架，所有关于 userID的值最好是用户名，用户名不可重复）
