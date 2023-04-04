@@ -21,4 +21,5 @@
   "AccessControlAllowOrigin": "*",
   "AccessControlAllowHeaders": "*",
   "AccessControlAllowMethods": "POST, GET, PUT, OPTIONS, DELETE, PATCH"
+  
 }
